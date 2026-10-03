@@ -1,11 +1,10 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 
 /**
  * YouTubePlayer – Wraps the YouTube IFrame API.
- * Accepts videoId, playState, and currentTime as controlled props.
- * Calls onReady when the player is initialized.
+ * Exposes getDuration(), getCurrentTime(), and forceSync() via ref.
  */
-export default function YouTubePlayer({
+const YouTubePlayer = forwardRef(function YouTubePlayer({
   videoId,
   playState,
   currentTime,
@@ -13,13 +12,39 @@ export default function YouTubePlayer({
   onPlayerReady,
   onLocalPlay,
   onLocalPause,
-  onLocalSeek,
-}) {
+}, ref) {
   const containerRef = useRef(null);
   const playerRef = useRef(null);
   const isReadyRef = useRef(false);
   const suppressEventsRef = useRef(false);
   const lastSyncTimeRef = useRef(0);
+
+  // Expose methods to parent via ref
+  useImperativeHandle(ref, () => ({
+    getCurrentTime: () => {
+      try {
+        return playerRef.current?.getCurrentTime?.() || 0;
+      } catch { return 0; }
+    },
+    getDuration: () => {
+      try {
+        return playerRef.current?.getDuration?.() || 0;
+      } catch { return 0; }
+    },
+    forceSync: (time, state) => {
+      if (!isReadyRef.current || !playerRef.current) return;
+      suppressEventsRef.current = true;
+      try {
+        playerRef.current.seekTo(time, true);
+        if (state === 'playing') {
+          playerRef.current.playVideo();
+        } else {
+          playerRef.current.pauseVideo();
+        }
+      } catch (_) { /* ignore */ }
+      setTimeout(() => { suppressEventsRef.current = false; }, 800);
+    },
+  }));
 
   // Load YouTube IFrame API
   useEffect(() => {
@@ -86,13 +111,9 @@ export default function YouTubePlayer({
     } else {
       window.onYouTubeIframeAPIReady = initPlayer;
     }
-
-    return () => {
-      // Cleanup
-    };
   }, [videoId]); // Only re-init when videoId changes
 
-  // Sync play/pause state
+  // Sync play/pause state from server
   useEffect(() => {
     if (!isReadyRef.current || !playerRef.current) return;
 
@@ -112,7 +133,7 @@ export default function YouTubePlayer({
     }, 500);
   }, [playState]);
 
-  // Sync seek position
+  // Sync seek position from server
   useEffect(() => {
     if (!isReadyRef.current || !playerRef.current) return;
     if (currentTime === lastSyncTimeRef.current) return;
@@ -153,4 +174,6 @@ export default function YouTubePlayer({
       <div ref={containerRef} />
     </div>
   );
-}
+});
+
+export default YouTubePlayer;

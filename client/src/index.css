@@ -645,15 +645,117 @@ input, textarea {
   color: var(--text-muted);
 }
 
-/* ─── Playback Controls ────────────────────────────────── */
+/* ─── Playback Controls Wrapper ─────────────────────────── */
+
+.playback-controls-wrapper {
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* ─── Seek Bar ──────────────────────────────────────────── */
+
+.seek-bar-container {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-xl) 0;
+}
+
+.seek-time {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  min-width: 42px;
+  text-align: center;
+  user-select: none;
+}
+
+.seek-bar-track {
+  flex: 1;
+  position: relative;
+  height: 6px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  overflow: visible;
+}
+
+.seek-bar-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: 3px;
+  pointer-events: none;
+  transition: width 0.1s linear;
+}
+
+.seek-bar-input {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 100%;
+  height: 20px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+  margin: 0;
+}
+
+.seek-bar-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Thumb — WebKit */
+.seek-bar-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-secondary);
+  border: 2px solid var(--bg-secondary);
+  box-shadow: 0 0 8px rgba(108, 92, 231, 0.4);
+  cursor: grab;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.seek-bar-input::-webkit-slider-thumb:hover {
+  transform: scale(1.3);
+  box-shadow: 0 0 14px rgba(108, 92, 231, 0.6);
+}
+
+.seek-bar-input:active::-webkit-slider-thumb {
+  cursor: grabbing;
+  transform: scale(1.4);
+}
+
+/* Thumb — Firefox */
+.seek-bar-input::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-secondary);
+  border: 2px solid var(--bg-secondary);
+  box-shadow: 0 0 8px rgba(108, 92, 231, 0.4);
+  cursor: grab;
+}
+
+.seek-bar-input::-moz-range-track {
+  background: transparent;
+  border: none;
+}
+
+/* ─── Playback Controls Row ─────────────────────────────── */
 
 .playback-controls {
   display: flex;
   align-items: center;
   gap: var(--space-md);
-  padding: var(--space-md) var(--space-xl);
-  background: var(--bg-secondary);
-  border-top: 1px solid var(--border-subtle);
+  padding: var(--space-sm) var(--space-xl) var(--space-md);
 }
 
 .playback-btn-group {
@@ -718,26 +820,11 @@ input, textarea {
   color: var(--text-muted);
 }
 
-.sync-indicator {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  font-size: var(--font-size-xs);
-  color: var(--accent-success);
-  font-weight: 600;
-}
+/* ─── Sync Button ───────────────────────────────────────── */
 
-.sync-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--accent-success);
-  animation: pulse-dot 2s ease-in-out infinite;
-}
-
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.8); }
+.sync-btn {
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* ═══════════════════════════════════════════════════════════

@@ -19,7 +19,13 @@ export default function RoomView({ initialRoom, currentUser: initialUser, initia
   const [kicked, setKicked] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const playerRef = useRef(null);
+  // Local playback tracking
+  const [localTime, setLocalTime] = useState(initialRoom.currentTime || 0);
+  const [duration, setDuration] = useState(0);
+
+  const ytPlayerRef = useRef(null); // ref to YouTubePlayer component
+  const playerObjRef = useRef(null); // raw YT player object
+  const timeIntervalRef = useRef(null);
 
   // Determine current user's role from latest participants list
   const myRole = participants.find(p => p.userId === user.userId)?.role || user.role;
@@ -29,6 +35,20 @@ export default function RoomView({ initialRoom, currentUser: initialUser, initia
   useEffect(() => {
     setUser(prev => ({ ...prev, role: myRole }));
   }, [myRole]);
+
+  // ─── Poll local player time every 500ms ─────────────────
+  useEffect(() => {
+    timeIntervalRef.current = setInterval(() => {
+      if (ytPlayerRef.current) {
+        const t = ytPlayerRef.current.getCurrentTime();
+        const d = ytPlayerRef.current.getDuration();
+        if (t >= 0) setLocalTime(t);
+        if (d > 0) setDuration(d);
+      }
+    }, 500);
+
+    return () => clearInterval(timeIntervalRef.current);
+  }, []);
 
   // ─── Socket Event Listeners ─────────────────────────────
   useEffect(() => {
@@ -117,7 +137,7 @@ export default function RoomView({ initialRoom, currentUser: initialUser, initia
 
   // ─── Player Callbacks ──────────────────────────────────
   const handlePlayerReady = (player) => {
-    playerRef.current = player;
+    playerObjRef.current = player;
   };
 
   const handleLocalPlay = () => {
@@ -127,6 +147,29 @@ export default function RoomView({ initialRoom, currentUser: initialUser, initia
   const handleLocalPause = () => {
     if (canControl) socket.emit('pause');
   };
+
+  // ─── Sync Button — request state from server and force-sync player ──
+  const handleSync = useCallback(() => {
+    socket.emit('request_sync');
+    // The sync_state event will update currentTime/playState,
+    // and the YouTubePlayer useEffect will apply it.
+    // But also force the player to jump immediately:
+    const handleForceSyncResponse = (data) => {
+      if (ytPlayerRef.current) {
+        ytPlayerRef.current.forceSync(data.currentTime || 0, data.playState || 'paused');
+      }
+      addToast('Synced to host!', 'success');
+    };
+    socket.once('sync_state', handleForceSyncResponse);
+  }, [socket, addToast]);
+
+  // ─── Seek from slider ──────────────────────────────────
+  const handleSeek = useCallback((time) => {
+    // Update local player immediately for responsiveness
+    if (ytPlayerRef.current) {
+      ytPlayerRef.current.forceSync(time, playState);
+    }
+  }, [playState]);
 
   // ─── Kicked Overlay ────────────────────────────────────
   if (kicked) {
@@ -181,6 +224,7 @@ export default function RoomView({ initialRoom, currentUser: initialUser, initia
       <main className="room-main">
         <div className="video-container">
           <YouTubePlayer
+            ref={ytPlayerRef}
             videoId={videoId}
             playState={playState}
             currentTime={currentTime}
@@ -195,6 +239,10 @@ export default function RoomView({ initialRoom, currentUser: initialUser, initia
           playState={playState}
           videoId={videoId}
           canControl={canControl}
+          localTime={localTime}
+          duration={duration}
+          onSync={handleSync}
+          onSeek={handleSeek}
         />
       </main>
 

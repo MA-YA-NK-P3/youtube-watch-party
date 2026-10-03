@@ -170,6 +170,13 @@ export function initSocketServer(httpServer) {
       }
     });
 
+    // ─── Request Sync (any participant can request current state) ──
+    socket.on('request_sync', () => {
+      const room = roomHandler.findRoomBySocket(socket.id);
+      if (!room) return socket.emit('error', { message: 'Not in a room' });
+      socket.emit('sync_state', room.getSyncState());
+    });
+
     // ─── Playback Events ────────────────────────────────────
     playbackHandler.register(socket);
 
