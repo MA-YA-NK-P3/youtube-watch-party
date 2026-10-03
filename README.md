@@ -6,7 +6,7 @@ A real-time Watch Party system that lets multiple users watch YouTube videos tog
 
 ## 🚀 Live Demo
 
-> **Deployed URL:** [https://youtube-watch-party-uwd1.onrender.com](https://youtube-watch-party-uwd1.onrender.com)
+> **Deployed URL:** [https://youtube-watch-party-uwdl.onrender.com](https://youtube-watch-party-uwdl.onrender.com)
 >
 > ⚠️ Free Render tier — first load after inactivity may take ~30s to wake up.
 
